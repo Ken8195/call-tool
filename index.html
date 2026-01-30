@@ -242,20 +242,33 @@ async function addPerson() {
 
   const id = `${owner}_${Date.now()}`;
 
- const { error } = await sb
-  .from("people")
-  .update({ memo: updated, last_call: now })
-  .eq("id", id);
+  const { error } = await sb
+    .from("people")
+    .insert([{
+      id: id,
+      name: name,
+      phone: phone,
+      contact: contact,
+      memo: "",
+      owner: owner,
+      last_call: ""
+    }]);
 
-if (error) {
-  alert(error.message);
-  console.error(error);
-}
+  if (error) {
+    alert(error.message);
+    console.error(error);
+    return;
   }
+
+  // フォーム初期化
+  document.getElementById("newName").value = "";
+  document.getElementById("newPhone").value = "";
+  document.getElementById("newContact").value = "未架電";
 
   document.getElementById("addForm").style.display = "none";
   fetchPeople();
 }
+
 
 /* ==========================
    ステータス更新
