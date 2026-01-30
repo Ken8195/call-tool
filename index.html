@@ -75,6 +75,16 @@ button { border:none; cursor:pointer; }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
+
+<script>
+const SUPABASE_URL = "...";
+const SUPABASE_ANON_KEY = "...";
+
+const sb = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+</script>
 </head>
 
 <body>
