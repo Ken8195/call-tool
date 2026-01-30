@@ -97,7 +97,7 @@ button { border:none; cursor:pointer; }
 
   <div id="addForm" style="display:none">
     <input id="newName" placeholder="名前">
-    <input id="newPhone" placeholder="電話番号 (11桁)">
+    <input id="newPhone" placeholder="電話番号（11桁）">
     <select id="newContact">
       <option>未架電</option>
       <option>架電不通</option>
@@ -110,25 +110,37 @@ button { border:none; cursor:pointer; }
 <div id="list"></div>
 
 <script>
-/* ===== Supabase 設定 ===== */
-const supabaseUrl = "https://ybszfsyxecghaddlzxaf.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlic3pmc3l4ZWNnaGFkZGx6eGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2MzI0OTksImV4cCI6MjA4NTIwODQ5OX0.DO2MIwSunCfeXiy3WEu30IZsAAt532TYqk6kaSZL6Yk";
+/* ==========================
+   Supabase 設定
+========================== */
+const SUPABASE_URL = "https://ybszfsyxecghaddlzxaf.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlic3pmc3l4ZWNnaGFkZGx6eGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2MzI0OTksImV4cCI6MjA4NTIwODQ5OX0.DO2MIwSunCfeXiy3WEu30IZsAAt532TYqk6kaSZL6Yk";
 
-const supabase = Supabase.createClient(supabaseUrl, supabaseKey);
+const sb = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
 
+/* ==========================
+   グローバル変数
+========================== */
 let people = [];
 let owner = localStorage.getItem("owner");
 
-/* ===== 担当者名 ===== */
+/* ==========================
+   担当者名
+========================== */
 if (!owner) {
   owner = prompt("あなたの名前を入力してください（例：A）");
   localStorage.setItem("owner", owner);
 }
 document.getElementById("ownerArea").innerHTML = `👤 担当者：<b>${owner}</b>`;
 
-/* ===== 取得 ===== */
+/* ==========================
+   データ取得
+========================== */
 async function fetchPeople() {
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from("people")
     .select("*")
     .eq("owner", owner)
@@ -138,11 +150,13 @@ async function fetchPeople() {
     console.error(error);
     return;
   }
-  people = data;
+  people = data || [];
   render(people);
 }
 
-/* ===== 描画 ===== */
+/* ==========================
+   描画
+========================== */
 function render(data) {
   const list = document.getElementById("list");
   list.innerHTML = "";
@@ -150,6 +164,7 @@ function render(data) {
   data.forEach(p => {
     const card = document.createElement("div");
     card.className = `card ${p.contact}`;
+
     card.innerHTML = `
       <div class="header">
         <span>${p.name}</span>
@@ -186,7 +201,9 @@ function render(data) {
   });
 }
 
-/* ===== フィルター ===== */
+/* ==========================
+   フィルター
+========================== */
 function applyFilter() {
   const f = document.getElementById("filter").value;
   const s = document.getElementById("search").value.toLowerCase();
@@ -199,7 +216,9 @@ function applyFilter() {
   );
 }
 
-/* ===== 新規追加 ===== */
+/* ==========================
+   新規追加
+========================== */
 function toggleAdd() {
   const f = document.getElementById("addForm");
   f.style.display = f.style.display === "block" ? "none" : "block";
@@ -215,74 +234,87 @@ async function addPerson() {
     return;
   }
 
-  const { error } = await supabase
-    .from("people")
-    .insert([{
-      id: crypto.randomUUID(),   // ★ 修正点
-      name,
-      phone,
-      contact,
-      owner,
-      memo: "",
-      last_call: null            // ★ 修正点
-    }]);
+  const id = `${owner}_${Date.now()}`;
+
+  const { error } = await sb.from("people").insert([{
+    id,
+    name,
+    phone,
+    contact,
+    memo: "",
+    owner,
+    last_call: ""
+  }]);
 
   if (error) {
-    console.error("追加失敗:", error);
-    alert("追加に失敗しました");
+    console.error(error);
+    alert(error.message);
     return;
   }
 
-  document.getElementById("newName").value = "";
-  document.getElementById("newPhone").value = "";
-  document.getElementById("newContact").value = "未架電";
-
+  document.getElementById("addForm").style.display = "none";
   fetchPeople();
 }
 
-/* ===== 状態更新 ===== */
+/* ==========================
+   ステータス更新
+========================== */
 async function updateStatus(id, status) {
   const now = new Date().toLocaleString();
-  await supabase.from("people")
+
+  await sb
+    .from("people")
     .update({ contact: status, last_call: now })
     .eq("id", id);
 
   fetchPeople();
 }
 
-/* ===== ログ保存 ===== */
+/* ==========================
+   ログ保存
+========================== */
 async function saveLog(id) {
-  const memo = document.getElementById(`${id}-memo`).value;
-  const add = document.getElementById(`${id}-new`).value;
-  const now = new Date().toLocaleString();
-  const updated = memo + (add ? `\n[${now}] ${add}` : "");
+  const memoEl = document.getElementById(`${id}-memo`);
+  const newEl = document.getElementById(`${id}-new`);
 
-  await supabase.from("people")
+  const now = new Date().toLocaleString();
+  const updated = (memoEl.value ? memoEl.value + "\n" : "") +
+                  `[${now}] ${newEl.value}`;
+
+  await sb
+    .from("people")
     .update({ memo: updated, last_call: now })
     .eq("id", id);
 
+  newEl.value = "";
   fetchPeople();
 }
 
-/* ===== 編集 ===== */
+/* ==========================
+   情報編集
+========================== */
 async function editPerson(id) {
   const p = people.find(x => x.id === id);
-  const name = prompt("名前", p.name);
-  const phone = prompt("電話番号(11桁)", p.phone);
 
-  if (!name || !/^\d{11}$/.test(phone)) {
-    alert("11桁の数字で入力してください");
+  const newName = prompt("名前を編集", p.name);
+  const newPhone = prompt("電話番号（11桁）", p.phone);
+
+  if (!newName || !/^\d{11}$/.test(newPhone)) {
+    alert("正しく入力してください");
     return;
   }
 
-  await supabase.from("people")
-    .update({ name, phone })
+  await sb
+    .from("people")
+    .update({ name: newName, phone: newPhone })
     .eq("id", id);
 
   fetchPeople();
 }
 
-/* ===== 初期表示 ===== */
+/* ==========================
+   初期表示
+========================== */
 fetchPeople();
 </script>
 
