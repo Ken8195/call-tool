@@ -242,20 +242,15 @@ async function addPerson() {
 
   const id = `${owner}_${Date.now()}`;
 
-  const { error } = await sb.from("people").insert([{
-    id,
-    name,
-    phone,
-    contact,
-    memo: "",
-    owner,
-    last_call: ""
-  }]);
+ const { error } = await sb
+  .from("people")
+  .update({ memo: updated, last_call: now })
+  .eq("id", id);
 
-  if (error) {
-    console.error(error);
-    alert(error.message);
-    return;
+if (error) {
+  alert(error.message);
+  console.error(error);
+}
   }
 
   document.getElementById("addForm").style.display = "none";
