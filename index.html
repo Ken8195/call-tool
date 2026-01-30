@@ -114,7 +114,7 @@ button { border:none; cursor:pointer; }
    Supabase 設定
 ========================== */
 const SUPABASE_URL = "https://ybszfsyxecghaddlzxaf.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlic3pmc3l4ZWNnaGFkZGx6eGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2MzI0OTksImV4cCI6MjA4NTIwODQ5OX0.DO2MIwSunCfeXiy3WEu30IZsAAt532TYqk6kaSZL6Yk";
+const SUPABASE_ANON_KEY = "＜ここはあなたの anon key＞";
 
 const sb = supabase.createClient(
   SUPABASE_URL,
@@ -122,19 +122,25 @@ const sb = supabase.createClient(
 );
 
 /* ==========================
-   グローバル変数
+   グローバル状態
 ========================== */
 let people = [];
-let owner = localStorage.getItem("owner");
 
 /* ==========================
-   担当者名
+   担当者 初期化（★修正点）
 ========================== */
-if (!owner) {
-  owner = prompt("あなたの名前を入力してください（例：A）");
-  localStorage.setItem("owner", owner);
+function initOwner() {
+  let stored = localStorage.getItem("owner");
+  if (!stored) {
+    stored = prompt("あなたの名前を入力してください（例：A）");
+    localStorage.setItem("owner", stored);
+  }
+  return stored;
 }
-document.getElementById("ownerArea").innerHTML = `👤 担当者：<b>${owner}</b>`;
+
+const owner = initOwner();
+document.getElementById("ownerArea").innerHTML =
+  `👤 担当者：<b>${owner}</b>`;
 
 /* ==========================
    データ取得
@@ -278,8 +284,9 @@ async function saveLog(id) {
   const newEl = document.getElementById(`${id}-new`);
 
   const now = new Date().toLocaleString();
-  const updated = (memoEl.value ? memoEl.value + "\n" : "") +
-                  `[${now}] ${newEl.value}`;
+  const updated =
+    (memoEl.value ? memoEl.value + "\n" : "") +
+    `[${now}] ${newEl.value}`;
 
   await sb
     .from("people")
