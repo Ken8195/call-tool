@@ -125,7 +125,8 @@ const sb = supabase.createClient(
    グローバル状態
 ========================== */
 let people = [];
-
+let owner;   // ← ★ここを追加
+  
 /* ==========================
    担当者 初期化（★修正点）
 ========================== */
@@ -138,9 +139,10 @@ function initOwner() {
   return stored;
 }
 
-const owner = initOwner();
+owner = initOwner();
 document.getElementById("ownerArea").innerHTML =
   `👤 担当者：<b>${owner}</b>`;
+
 
 /* ==========================
    データ取得
